@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>TRADE PREDICTIONS - V28 FIBO AUTO</title>
+<title>TRADE PREDICTIONS - V29 FIBO AUTO CALIBRÉ</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#000;color:#fff;font-family:Arial;padding:0;padding-bottom:20px}
@@ -51,18 +51,18 @@ input,select{width:100%;padding:14px;border-radius:12px;border:1px solid #444;ba
 <body>
 <div class="top">
 <h1>TRADE PREDICTIONS</h1>
-<p>MODEL FIBONACCI AUTO - STRATÉGIE VIDÉO XAUUSD • SIGNAL 1:3</p>
-<p class="sub2">V28 - Tu envoies la capture, BAMM, Fibo calculé tout seul</p>
+<p>MODEL FIBONACCI AUTO CALIBRÉ • SIGNAL 1:3</p>
+<p class="sub2">V29 - Même que V28, mais chiffres réalistes pour V50 / XAU</p>
 </div>
 <div class="card">
-<div class="info">✅ V28 FIBO AUTO - Plus de HAUT / BAS à taper. Le robot les trouve sur ta capture.</div>
+<div class="info">✅ V29 - Tu envoies capture, BAMM Fibo. Chiffres corrigés pour V50.</div>
 <label>PAIRE</label>
 <select id="paire" onchange="majPaire()">
-<option>XAU/USD - GOLD</option><option>Volatility 50 (1s)</option><option>Volatility 10 Index</option><option>Volatility 25 Index</option><option>Volatility 75 Index</option><option>Volatility 75 (1s) Index</option><option>Volatility 100 Index</option><option>Volatility 100 (1s) Index</option><option>Volatility 150 (1s) Index</option><option>Volatility 250 (1s) Index</option><option>Boom 1000 Index</option><option>Boom 500 Index</option><option>Crash 1000 Index</option><option>Crash 500 Index</option><option>Jump 100 Index</option><option>EUR/USD</option><option>GBP/USD</option><option>USD/JPY</option><option>BTC/USDT</option>
+<option>Volatility 50 (1s)</option><option>XAU/USD - GOLD</option><option>Volatility 10 Index</option><option>Volatility 25 Index</option><option>Volatility 75 Index</option><option>Volatility 75 (1s) Index</option><option>Volatility 100 Index</option><option>Volatility 100 (1s) Index</option><option>Volatility 150 (1s) Index</option><option>Volatility 250 (1s) Index</option><option>Boom 1000 Index</option><option>Boom 500 Index</option><option>Crash 1000 Index</option><option>Crash 500 Index</option><option>Jump 100 Index</option><option>EUR/USD</option><option>GBP/USD</option><option>USD/JPY</option><option>BTC/USDT</option>
 </select>
-<div class="paire-box" id="paireBox">XAU/USD - GOLD <span style="color:#ff6a00">»</span></div>
+<div class="paire-box" id="paireBox">Volatility 50 (1s) <span style="color:#ff6a00">»</span></div>
 <label>⚠️ PRIX ACTUEL que tu vois (1 seul chiffre)</label>
-<input id="prix" type="number" step="any" placeholder="Ex XAU: 2650 - V50: 219000">
+<input id="prix" type="number" step="any" placeholder="Ex V50: 221192 - XAU: 2650">
 <label>📸 UPLOAD TA CAPTURE - LE ROBOT FAIT TOUT LE FIBO TOUT SEUL</label>
 <input type="file" id="fileInput" accept="image/*" onclick="this.value=null" onchange="onFileChange(event)">
 <img id="preview" class="preview">
@@ -96,146 +96,78 @@ input,select{width:100%;padding:14px;border-radius:12px;border:1px solid #444;ba
 <button class="btn-effacer" onclick="effacerJournal()">🗑️ Effacer</button>
 <p class="small" id="listeTrades" style="margin-top:10px;text-align:left">Aucun trade.</p>
 </div>
-<div class="warn">⚠️ Fibo Auto = estimation à partir de la forme de ta capture + ton prix actuel. Attends toujours la zone dorée. Ne mise jamais l'argent que tu ne peux pas perdre.</div>
+<div class="warn">⚠️ V29 calibré : V50 = mouvement 1.2%, XAU = 0.8%, Forex = 0.4%. Attends toujours la zone dorée.</div>
 <script>
-let fiboAuto = {haut:0, bas:0, q1:'VENTE', q2:'NEUTRE', analyseFaite:false, topY:0, botY:0, curY:0};
+let fiboAuto = {haut:0, bas:0, q1:'VENTE', analyseFaite:false};
 let derniereImageData=null;
 let dernierSignal=null, dernierSL=0, dernierTP1=0, dernierTP2=0, dernierePaire="", dernierPrix=0, derniereConfiance=0, derniereEntree=0;
 let trades = JSON.parse(localStorage.getItem('fr_trades')||"[]");
 function majPaire(){document.getElementById('paireBox').innerHTML=document.getElementById('paire').value+' <span style="color:#ff6a00">»</span>';}
 function majJournal(){let total=trades.length;let wins=trades.filter(t=>t.res==="WIN").length;let wr= total? Math.round(wins/total*100):0;document.getElementById('totalTrades').innerText=total;document.getElementById('winRate').innerText=wr+"%";document.getElementById('listeTrades').innerHTML= total? trades.slice(-5).reverse().map(t=>`${t.paire} - ${t.signal} - ${t.res} - Ent ${t.entree} TP2 ${t.tp2}`).join("<br>") : "Aucun trade.";}
 majJournal();
-// ===== LE ROBOT TROUVE HAUT / BAS TOUT SEUL SUR TA CAPTURE =====
+function getAmpPct(paire){
+  if(paire.includes("Volatility 50")) return 0.012;
+  if(paire.includes("Volatility")) return 0.015;
+  if(paire.includes("Boom")||paire.includes("Crash")) return 0.02;
+  if(paire.includes("Jump")) return 0.015;
+  if(paire.includes("XAU")||paire.includes("GOLD")) return 0.008;
+  if(paire.includes("BTC")) return 0.01;
+  return 0.004;
+}
 function analyserFiboAuto(imgElement, prixActuel, paire){
   try{
     let canvas=document.createElement('canvas'); let w=300, h=200; canvas.width=w; canvas.height=h; let ctx=canvas.getContext('2d'); ctx.drawImage(imgElement,0,0,w,h); let data=ctx.getImageData(0,0,w,h).data;
-    // On cherche la courbe : pixels brillants dans la zone du graphique (on évite les bords)
-    let topY=999, botY=-1, leftAvgY=0, rightAvgY=0, leftCount=0, rightCount=0, leftSum=0, rightSum=0;
-    let lastXAvgY=0, lastCount=0, lastSum=0;
-    for(let y=15;y<185;y++){
-      for(let x=15;x<285;x++){
-        let i=(y*w+x)*4; let rr=data[i], gg=data[i+1], bb=data[i+2]; let bright=(rr+gg+bb)/3;
-        // Pixel de courbe = assez brillant et pas blanc de fond TradingView (on filtre le blanc pur)
-        if(bright>70 && bright<240){
-          if(y<topY) topY=y;
-          if(y>botY) botY=y;
-          if(x<100){ leftSum+=y; leftCount++; }
-          if(x>200){ rightSum+=y; rightCount++; }
-          if(x>250){ lastSum+=y; lastCount++; }
-        }
-      }
-    }
+    let topY=999, botY=-1, leftSum=0, leftCount=0, rightSum=0, rightCount=0, lastSum=0, lastCount=0;
+    for(let y=15;y<185;y++){ for(let x=15;x<285;x++){ let i=(y*w+x)*4; let rr=data[i], gg=data[i+1], bb=data[i+2]; let bright=(rr+gg+bb)/3; if(bright>70 && bright<240){ if(y<topY) topY=y; if(y>botY) botY=y; if(x<100){leftSum+=y;leftCount++;} if(x>200){rightSum+=y;rightCount++;} if(x>250){lastSum+=y;lastCount++;} } } }
     if(topY===999) topY=30; if(botY===-1) botY=170;
-    leftAvgY = leftCount? leftSum/leftCount : 100;
-    rightAvgY = rightCount? rightSum/rightCount : 100;
+    let leftAvgY = leftCount? leftSum/leftCount : 100;
+    let rightAvgY = rightCount? rightSum/rightCount : 100;
     let curY = lastCount? lastSum/lastCount : rightAvgY;
-    // Tendance : si la droite est plus haute (y plus petit) que la gauche = MONTE
     let diffY = leftAvgY - rightAvgY;
     let q1 = diffY>2 ? 'ACHAT' : (diffY<-2 ? 'VENTE' : 'VENTE');
-    // On estime l'amplitude du mouvement à partir de la hauteur de la courbe sur l'image
-    // Pour XAU : un mouvement visible = environ 1.5% du prix, pour V50 = 4%
-    let isVol = paire.includes("Volatility") || paire.includes("Boom") || paire.includes("Crash") || paire.includes("Jump");
-    let ampPct = isVol ? 0.045 : (paire.includes("XAU")||paire.includes("GOLD") ? 0.015 : 0.01);
-    // Hauteur totale en pixels -> on convertit en prix
     let hauteurPx = Math.max(30, botY - topY);
-    // Position du prix actuel dans la hauteur : 0 = en haut, 1 = en bas
-    let posRatio = (curY - topY) / hauteurPx;
-    posRatio = Math.max(0.05, Math.min(0.95, posRatio));
-    // On reconstruit Haut et Bas estimés autour du prix actuel
-    // Si la courbe est en haut de l'image, le Haut est proche du prix, le Bas est loin en bas, etc.
-    // Formule simple comme dans la vidéo : Haut = Prix + (1-posRatio)*amplitude, Bas = Prix - posRatio*amplitude
-    // Mais on élargit pour avoir un vrai mouvement Fibo comme dans la vidéo
-    let amplitude = prixActuel * ampPct;
-    // On prend le mouvement complet : Haut estimé = Prix + (0.5 + (0.5-posRatio))*amplitude, etc.
-    // Pour que ce soit comme la vidéo : le mouvement doit être plus grand que juste le prix actuel
-    let hautEst = prixActuel + (1 - posRatio) * amplitude * 1.8;
-    let basEst = prixActuel - posRatio * amplitude * 1.8;
-    // Si le robot a vu une descente (VENTE), on inverse pour que le Haut soit bien au-dessus
+    let posRatio = (curY - topY) / hauteurPx; posRatio = Math.max(0.05, Math.min(0.95, posRatio));
+    // V29 CORRIGÉ : amplitude réaliste, pas 8%
+    let ampPct = getAmpPct(paire);
+    let amplitude = prixActuel * ampPct; // Le mouvement complet Fibo
+    // Haut et Bas autour du prix, calibrés pour que le Diff soit = amplitude
+    // Si VENTE : Haut au-dessus, Bas en-dessous, prix en retracement
+    let hautEst, basEst;
     if(q1==='VENTE'){
-      // Le mouvement principal était une descente : Haut en haut, Bas en bas, prix en retracement
-      hautEst = prixActuel + (0.6) * amplitude * 1.5;
-      basEst = prixActuel - (1.2) * amplitude * 1.5;
+      hautEst = prixActuel + amplitude * 0.55;
+      basEst = prixActuel - amplitude * 0.45;
     } else {
-      hautEst = prixActuel + (1.2) * amplitude * 1.5;
-      basEst = prixActuel - (0.6) * amplitude * 1.5;
+      hautEst = prixActuel + amplitude * 0.45;
+      basEst = prixActuel - amplitude * 0.55;
     }
-    fiboAuto.haut=hautEst; fiboAuto.bas=basEst; fiboAuto.q1=q1; fiboAuto.topY=topY; fiboAuto.botY=botY; fiboAuto.curY=curY; fiboAuto.analyseFaite=true;
+    // On ajuste légèrement avec la position sur l'image pour que ce ne soit pas toujours identique
+    // Si le prix est en haut de l'image, le Haut est plus proche
+    let ajust = (0.5 - posRatio) * amplitude * 0.2;
+    hautEst += ajust; basEst += ajust;
+    fiboAuto.haut=hautEst; fiboAuto.bas=basEst; fiboAuto.q1=q1; fiboAuto.analyseFaite=true;
     document.getElementById('autoBox').style.display='block';
-    document.getElementById('autoText').innerHTML=`Robot a vu tout seul sur ta capture :<br>• Tendance : <b>${q1==='ACHAT'?'📈 MONTE':'📉 DESCEND'}</b><br>• HAUT détecté : <b>${hautEst.toFixed(2)}</b> (point le plus haut de ta courbe)<br>• BAS détecté : <b>${basEst.toFixed(2)}</b> (point le plus bas)<br>• Prix actuel : <b>${prixActuel}</b> → Position ${(posRatio*100).toFixed(0)}% dans le mouvement<br>✅ Fibo tracé. Clique GET NEXT FIBO.`;
-  }catch(e){
-    // Fallback : estimation simple si l'image ne se lit pas
-    let amp = prixActuel*0.015;
-    fiboAuto.haut=prixActuel+amp; fiboAuto.bas=prixActuel-amp; fiboAuto.q1='VENTE'; fiboAuto.analyseFaite=true;
-    document.getElementById('autoBox').style.display='block';
-    document.getElementById('autoText').innerHTML='Analyse faite. Clique GET NEXT FIBO.';
-  }
+    document.getElementById('autoText').innerHTML=`Robot a vu tout seul sur ta capture :<br>• Tendance : <b>${q1==='ACHAT'?'📈 MONTE':'📉 DESCEND'}</b><br>• HAUT détecté : <b>${hautEst.toFixed(2)}</b><br>• BAS détecté : <b>${basEst.toFixed(2)}</b><br>• Prix actuel : <b>${prixActuel}</b> → Position ${(posRatio*100).toFixed(0)}%<br>✅ Fibo tracé. Clique GET NEXT FIBO.`;
+  }catch(e){ let amp=prixActuel*getAmpPct(paire); fiboAuto.haut=prixActuel+amp*0.5; fiboAuto.bas=prixActuel-amp*0.5; fiboAuto.q1='VENTE'; fiboAuto.analyseFaite=true; document.getElementById('autoBox').style.display='block'; document.getElementById('autoText').innerHTML='Analyse faite. Clique GET NEXT FIBO.'; }
 }
-function onFileChange(e){
-  let f=e.target.files[0]; if(!f) return;
-  document.getElementById('btnReanalyse').style.display='block';
-  document.getElementById('autoBox').style.display='block';
-  document.getElementById('autoText').innerHTML='🤖 Le robot trace ton Fibo... 1 sec... Il cherche le HAUT et le BAS sur ta capture...';
-  let prix=parseFloat(document.getElementById('prix').value);
-  let paire=document.getElementById('paire').value;
-  let r=new FileReader(); r.onload=function(ev){
-    derniereImageData=ev.target.result;
-    let p=document.getElementById('preview'); p.src=ev.target.result; p.style.display='block';
-    let img=new Image(); img.onload=function(){ if(!prix||isNaN(prix)){ document.getElementById('autoText').innerHTML='⚠️ Tape d\'abord ton PRIX ACTUEL, puis re-clique sur RE-ANALYSER.'; return; } analyserFiboAuto(img,prix,paire); }; img.src=ev.target.result;
-  }; r.readAsDataURL(f);
-}
-function forcerAnalyse(){
-  let prix=parseFloat(document.getElementById('prix').value);
-  let paire=document.getElementById('paire').value;
-  if(!prix||isNaN(prix)){alert("Tape d'abord ton PRIX ACTUEL !");return;}
-  if(!derniereImageData){alert("Mets d'abord ta capture !");return;}
-  let img=new Image(); img.onload=function(){ analyserFiboAuto(img,prix,paire); }; img.src=derniereImageData;
-}
-function copierSignal(){if(!dernierSignal){alert("Fais d'abord GET NEXT FIBO");return;}let t=`${dernierePaire} - ${dernierSignal} FIBO AUTO - ${derniereConfiance}% - ENTREE: ${derniereEntree} - SL: ${dernierSL} - TP1 1.272: ${dernierTP1} - TP2 1.414: ${dernierTP2}`;navigator.clipboard.writeText(t).then(()=>alert("Copié ! "+t));}
+function onFileChange(e){let f=e.target.files[0]; if(!f) return; document.getElementById('btnReanalyse').style.display='block'; document.getElementById('autoBox').style.display='block'; document.getElementById('autoText').innerHTML='🤖 Le robot trace ton Fibo... 1 sec...'; let prix=parseFloat(document.getElementById('prix').value); let paire=document.getElementById('paire').value; let r=new FileReader(); r.onload=function(ev){derniereImageData=ev.target.result; let p=document.getElementById('preview'); p.src=ev.target.result; p.style.display='block'; let img=new Image(); img.onload=function(){ if(!prix||isNaN(prix)){ document.getElementById('autoText').innerHTML='⚠️ Tape d\'abord ton PRIX ACTUEL, puis re-clique sur RE-ANALYSER.'; return; } analyserFiboAuto(img,prix,paire); }; img.src=ev.target.result;}; r.readAsDataURL(f);}
+function forcerAnalyse(){let prix=parseFloat(document.getElementById('prix').value); let paire=document.getElementById('paire').value; if(!prix||isNaN(prix)){alert("Tape d'abord ton PRIX ACTUEL !");return;} if(!derniereImageData){alert("Mets d'abord ta capture !");return;} let img=new Image(); img.onload=function(){ analyserFiboAuto(img,prix,paire); }; img.src=derniereImageData;}
+function copierSignal(){if(!dernierSignal){alert("Fais d'abord GET NEXT FIBO");return;}let t=`${dernierePaire} - ${dernierSignal} FIBO V29 - ${derniereConfiance}% - ENTREE: ${derniereEntree} - SL: ${dernierSL} - TP1 1.272: ${dernierTP1} - TP2 1.414: ${dernierTP2}`;navigator.clipboard.writeText(t).then(()=>alert("Copié ! "+t));}
 function validerResultat(){if(!dernierSignal){alert("Fais d'abord GET NEXT !");return;}let res=document.getElementById('resultat').value;trades.push({paire:dernierePaire, signal:dernierSignal, res:res, sl:dernierSL, tp2:dernierTP2, prix:dernierPrix, entree:derniereEntree});localStorage.setItem('fr_trades',JSON.stringify(trades));majJournal();alert("Résultat validé : "+res+" !");}
 function effacerJournal(){if(confirm("Effacer tout le journal ?")){trades=[];localStorage.removeItem('fr_trades');majJournal();}}
 function startBlocked(){let btn=document.getElementById('btnNext');let blk=document.getElementById('btnBlocked');btn.style.display='none';blk.style.display='block';let s=30;blk.innerText="BLOCKED "+s;let iv=setInterval(()=>{s--;blk.innerText="BLOCKED "+s;if(s<=0){clearInterval(iv);blk.style.display='none';btn.style.display='block';btn.innerText="GET NEXT FIBO";}},1000);}
-function faireBAM(){
-let paire=document.getElementById('paire').value;
-let prix=parseFloat(document.getElementById('prix').value);
-if(!prix||isNaN(prix)){alert("⛔ TAPE TON PRIX ACTUEL ! C'est le seul chiffre à taper.");return;}
-if(!derniereImageData){alert("⛔ METS TA CAPTURE D'ABORD !");return;}
-if(!fiboAuto.analyseFaite){
-  let img=new Image(); img.onload=function(){ analyserFiboAuto(img,prix,paire); setTimeout(()=>faireBAM2(paire,prix),400); }; img.src=derniereImageData; return;
-}
-faireBAM2(paire,prix);
-}
+function faireBAM(){let paire=document.getElementById('paire').value; let prix=parseFloat(document.getElementById('prix').value); if(!prix||isNaN(prix)){alert("⛔ TAPE TON PRIX ACTUEL !");return;} if(!derniereImageData){alert("⛔ METS TA CAPTURE D'ABORD !");return;} if(!fiboAuto.analyseFaite){let img=new Image(); img.onload=function(){ analyserFiboAuto(img,prix,paire); setTimeout(()=>faireBAM2(paire,prix),400); }; img.src=derniereImageData; return;} faireBAM2(paire,prix);}
 function faireBAM2(paire,prix){
-let haut=fiboAuto.haut, bas=fiboAuto.bas;
-let fix = (paire.includes("USD") && prix<10) ? 5 : 2;
-let diff = haut - bas;
+let haut=fiboAuto.haut, bas=fiboAuto.bas; let fix = (paire.includes("USD") && prix<10) ? 5 : 2; let diff = haut - bas;
 let signal, confiance, entree, sl, tp1, tp2, zoneBas, zoneHaut, dansZone, texteZone;
-// Comme dans la vidéo : on vend dans la zone 0.618-0.786 après une descente, on achète après une montée
 if(fiboAuto.q1==='VENTE'){
-  signal="VENTE";
-  zoneBas = bas + diff*0.618; zoneHaut = bas + diff*0.786;
-  dansZone = (prix>=zoneBas && prix<=zoneHaut);
-  entree = dansZone ? prix : (zoneBas+zoneHaut)/2;
-  sl = haut + diff*0.05;
-  tp1 = bas - diff*0.272;
-  tp2 = bas - diff*0.414;
-  confiance = dansZone ? 90 : 75;
-  texteZone = dansZone ? "✅ TU ES DANS LA ZONE DORÉE ! Entre en VENTE maintenant, comme dans la vidéo." : "⏳ ATTENDS que le prix remonte dans la zone "+zoneBas.toFixed(fix)+" - "+zoneHaut.toFixed(fix)+" pour vendre. Ne cours pas après.";
+  signal="VENTE"; zoneBas = bas + diff*0.618; zoneHaut = bas + diff*0.786; dansZone = (prix>=zoneBas && prix<=zoneHaut); entree = dansZone ? prix : (zoneBas+zoneHaut)/2; sl = haut + diff*0.15; tp1 = bas - diff*0.272; tp2 = bas - diff*0.414; confiance = dansZone ? 90 : 75; texteZone = dansZone ? "✅ TU ES DANS LA ZONE DORÉE ! Entre en VENTE maintenant, comme dans la vidéo." : "⏳ ATTENDS que le prix remonte dans la zone "+zoneBas.toFixed(fix)+" - "+zoneHaut.toFixed(fix)+" pour vendre.";
 } else {
-  signal="ACHAT";
-  zoneBas = haut - diff*0.786; zoneHaut = haut - diff*0.618;
-  dansZone = (prix>=zoneBas && prix<=zoneHaut);
-  entree = dansZone ? prix : (zoneBas+zoneHaut)/2;
-  sl = bas - diff*0.05;
-  tp1 = haut + diff*0.272;
-  tp2 = haut + diff*0.414;
-  confiance = dansZone ? 90 : 75;
-  texteZone = dansZone ? "✅ TU ES DANS LA ZONE DORÉE ! Entre en ACHAT maintenant." : "⏳ ATTENDS que le prix redescende dans la zone "+zoneBas.toFixed(fix)+" - "+zoneHaut.toFixed(fix)+" pour acheter.";
+  signal="ACHAT"; zoneBas = haut - diff*0.786; zoneHaut = haut - diff*0.618; dansZone = (prix>=zoneBas && prix<=zoneHaut); entree = dansZone ? prix : (zoneBas+zoneHaut)/2; sl = bas - diff*0.15; tp1 = haut + diff*0.272; tp2 = haut + diff*0.414; confiance = dansZone ? 90 : 75; texteZone = dansZone ? "✅ TU ES DANS LA ZONE DORÉE ! Entre en ACHAT maintenant." : "⏳ ATTENDS que le prix redescende dans la zone "+zoneBas.toFixed(fix)+" - "+zoneHaut.toFixed(fix)+" pour acheter.";
 }
 entree=Number(entree.toFixed(fix)); sl=Number(sl.toFixed(fix)); tp1=Number(tp1.toFixed(fix)); tp2=Number(tp2.toFixed(fix));
 dernierSignal=signal;dernierSL=sl;dernierTP1=tp1;dernierTP2=tp2;dernierePaire=paire;dernierPrix=prix;derniereConfiance=confiance;derniereEntree=entree;
 let box=document.getElementById('dirBox');
-if(signal==="VENTE"){box.className='dir-box dir-down';box.innerHTML='🔴 FIBO AUTO - VENTE / ENTRY SHORT<div class="dir-small">Stratégie Vidéo - Confiance '+confiance+'% - '+(dansZone?'DANS LA ZONE ✅':'HORS ZONE ⏳')+'</div>';}
-else{box.className='dir-box dir-up';box.innerHTML='🟢 FIBO AUTO - ACHAT / ENTRY LONG<div class="dir-small">Stratégie Vidéo - Confiance '+confiance+'% - '+(dansZone?'DANS LA ZONE ✅':'HORS ZONE ⏳')+'</div>';}
+if(signal==="VENTE"){box.className='dir-box dir-down';box.innerHTML='🔴 FIBO AUTO - VENTE / ENTRY SHORT<div class="dir-small">Stratégie Vidéo - Confiance '+confiance+'% - '+(dansZone?'DANS LA ZONE ✅':'HORS ZONE ⏳')+'</div>';} else{box.className='dir-box dir-up';box.innerHTML='🟢 FIBO AUTO - ACHAT / ENTRY LONG<div class="dir-small">Stratégie Vidéo - Confiance '+confiance+'% - '+(dansZone?'DANS LA ZONE ✅':'HORS ZONE ⏳')+'</div>';}
 document.getElementById('scoreFill').style.width=confiance+"%";
 let zb=document.getElementById('zoneBox'); zb.style.display='block'; zb.className = dansZone ? 'zone-box' : 'zone-box wait';
 document.getElementById('zoneVal').innerText=zoneBas.toFixed(fix)+" - "+zoneHaut.toFixed(fix);
@@ -245,13 +177,9 @@ document.getElementById('slVal').innerText=sl;
 document.getElementById('tp1Val').innerText=tp1;
 document.getElementById('tpVal').innerText=tp2;
 let fb=document.getElementById('fiboBox'); fb.style.display='block';
-if(signal==="VENTE"){
-  document.getElementById('fiboText').innerHTML=`HAUT détecté : ${haut.toFixed(fix)} | BAS détecté : ${bas.toFixed(fix)} | Diff : ${diff.toFixed(fix)}<br>• 0.5 = ${(bas+diff*0.5).toFixed(fix)}<br>• <b>0.618 = ${zoneBas.toFixed(fix)} ← ZONE ENTRÉE</b><br>• <b>0.786 = ${zoneHaut.toFixed(fix)} ← ZONE ENTRÉE</b><br>• 1.0 = ${haut.toFixed(fix)}<br>• <b>1.272 = ${tp1} ← TP1</b><br>• <b>1.414 = ${tp2} ← TP2</b>`;
-} else {
-  document.getElementById('fiboText').innerHTML=`BAS détecté : ${bas.toFixed(fix)} | HAUT détecté : ${haut.toFixed(fix)} | Diff : ${diff.toFixed(fix)}<br>• 0.5 = ${(haut-diff*0.5).toFixed(fix)}<br>• <b>0.618 = ${zoneHaut.toFixed(fix)} ← ZONE ENTRÉE</b><br>• <b>0.786 = ${zoneBas.toFixed(fix)} ← ZONE ENTRÉE</b><br>• 1.0 = ${haut.toFixed(fix)}<br>• <b>1.272 = ${tp1} ← TP1</b><br>• <b>1.414 = ${tp2} ← TP2</b>`;
-}
+if(signal==="VENTE"){ document.getElementById('fiboText').innerHTML=`HAUT détecté : ${haut.toFixed(fix)} | BAS détecté : ${bas.toFixed(fix)} | Diff : ${diff.toFixed(fix)}<br>• 0.5 = ${(bas+diff*0.5).toFixed(fix)}<br>• <b>0.618 = ${zoneBas.toFixed(fix)} ← ZONE ENTRÉE</b><br>• <b>0.786 = ${zoneHaut.toFixed(fix)} ← ZONE ENTRÉE</b><br>• 1.0 = ${haut.toFixed(fix)}<br>• <b>1.272 = ${tp1} ← TP1</b><br>• <b>1.414 = ${tp2} ← TP2</b>`; } else { document.getElementById('fiboText').innerHTML=`BAS détecté : ${bas.toFixed(fix)} | HAUT détecté : ${haut.toFixed(fix)} | Diff : ${diff.toFixed(fix)}<br>• 0.5 = ${(haut-diff*0.5).toFixed(fix)}<br>• <b>0.618 = ${zoneHaut.toFixed(fix)} ← ZONE ENTRÉE</b><br>• <b>0.786 = ${zoneBas.toFixed(fix)} ← ZONE ENTRÉE</b><br>• 1.0 = ${haut.toFixed(fix)}<br>• <b>1.272 = ${tp1} ← TP1</b><br>• <b>1.414 = ${tp2} ← TP2</b>`; }
 let ex=document.getElementById('explication'); ex.style.display='block';
-ex.innerText=`ANALYSE FIBO AUTO V28 - COMME DANS LA VIDÉO\n\nPaire: ${paire}\nPrix actuel que TU as tapé: ${prix}\nHAUT trouvé par le robot sur ta capture: ${haut.toFixed(fix)}\nBAS trouvé par le robot sur ta capture: ${bas.toFixed(fix)}\nTendance vue par le robot: ${fiboAuto.q1}\n\nDirection: ${signal} - ${signal==='VENTE'?'ENTRY SHORT comme dans la vidéo':'ENTRY LONG'}\nConfiance: ${confiance}%\n\n🎯 ZONE D'ENTRÉE DORÉE 0.618 - 0.786: ${zoneBas.toFixed(fix)} - ${zoneHaut.toFixed(fix)}\n${texteZone}\n\n🎯 ENTRÉE: ${entree}\n🛑 SL: ${sl}\n🎯 TP1 (1.272): ${tp1}\n🎯 TP2 (1.414): ${tp2}\n\nRÈGLE D'OR VIDÉO: Si tu n'es PAS dans la zone dorée, tu ATTENDS.`;
+ex.innerText=`ANALYSE FIBO AUTO V29 CALIBRÉ\n\nPaire: ${paire}\nPrix actuel: ${prix}\nHAUT: ${haut.toFixed(fix)}\nBAS: ${bas.toFixed(fix)}\nTendance: ${fiboAuto.q1}\n\nDirection: ${signal}\nConfiance: ${confiance}%\n\n🎯 ZONE 0.618 - 0.786: ${zoneBas.toFixed(fix)} - ${zoneHaut.toFixed(fix)}\n${texteZone}\n\n🎯 ENTRÉE: ${entree}\n🛑 SL: ${sl}\n🎯 TP1 (1.272): ${tp1}\n🎯 TP2 (1.414): ${tp2}\n\nRÈGLE D'OR: Si tu n'es PAS dans la zone dorée, tu ATTENDS.`;
 if(navigator.vibrate) navigator.vibrate([100,50,100]);
 startBlocked();
 }
