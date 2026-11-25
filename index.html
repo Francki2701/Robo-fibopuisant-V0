@@ -46,7 +46,6 @@ input,select{width:100%;padding:14px;border-radius:12px;border:1px solid #444;ba
 .warn{background:#220000;border:1px solid #ff1744;padding:10px;border-radius:12px;font-size:11px;line-height:1.5;color:#ffaaaa;margin:14px}
 .score-bar{height:12px;background:#222;border-radius:10px;overflow:hidden;margin:10px 0}
 .score-fill{height:100%;background:linear-gradient(90deg,#ff1744,#ffcc00,#00c853);width:0%}
-/* SEUL AJOUT CSS : BOITE CONFIANCE */
 .conf-box{background:#0a0a0a;border:2px solid #00ff88;border-radius:14px;padding:14px;text-align:center;margin:12px 0}
 .conf-big{font-size:38px;font-weight:900;color:#00ff88}
 .conf-label{font-size:13px;font-weight:900}
@@ -74,15 +73,12 @@ input,select{width:100%;padding:14px;border-radius:12px;border:1px solid #444;ba
 <div class="auto-box" id="autoBox">🤖 <b>ANALYSE FIBO AUTOMATIQUE :</b><br><span id="autoText">En attente de ta capture...</span></div>
 <label>DIRECTION FIBO</label>
 <div class="dir-box dir-wait" id="dirBox">⏳ EN ATTENTE<div class="dir-small">Mets ton prix, mets ta capture, clique GET NEXT FIBO</div></div>
-
-<!-- SEUL AJOUT HTML : BOITE CONFIANCE % -->
 <div class="conf-box">
 <b style="color:#ffcc00">CONFIANCE DE L'ANALYSE</b>
 <div class="conf-big" id="confBig">-- %</div>
 <div class="conf-label" id="confLabel">En attente...</div>
-<div class="small">85%+ = Très fort ✅ | 70-84% = Fort ✅ | 60-69% = Attends ❌</div>
+<div class="small">85%+ = Très fort ✅ | 70-84% = Fort ✅ | 62-69% = Attends ❌</div>
 </div>
-
 <div class="score-bar"><div class="score-fill" id="scoreFill"></div></div>
 <div class="zone-box" id="zoneBox">🎯 ZONE D'ENTRÉE FIBO 0.618 - 0.786 : <span id="zoneVal">---</span><div class="small" id="zoneText"></div></div>
 <button class="btn-next" id="btnNext" onclick="faireBAM()">GET NEXT FIBO</button>
@@ -164,38 +160,32 @@ function validerResultat(){if(!dernierSignal){alert("Fais d'abord GET NEXT !");r
 function effacerJournal(){if(confirm("Effacer tout le journal ?")){trades=[];localStorage.removeItem('fr_trades');majJournal();}}
 function startBlocked(){let btn=document.getElementById('btnNext');let blk=document.getElementById('btnBlocked');btn.style.display='none';blk.style.display='block';let s=30;blk.innerText="BLOCKED "+s;let iv=setInterval(()=>{s--;blk.innerText="BLOCKED "+s;if(s<=0){clearInterval(iv);blk.style.display='none';btn.style.display='block';btn.innerText="GET NEXT FIBO";}},1000);}
 function faireBAM(){let paire=document.getElementById('paire').value; let prix=parseFloat(document.getElementById('prix').value); if(!prix||isNaN(prix)){alert("⛔ TAPE TON PRIX ACTUEL !");return;} if(!derniereImageData){alert("⛔ METS TA CAPTURE D'ABORD !");return;} if(!fiboAuto.analyseFaite){let img=new Image(); img.onload=function(){ analyserFiboAuto(img,prix,paire); setTimeout(()=>faireBAM2(paire,prix),400); }; img.src=derniereImageData; return;} faireBAM2(paire,prix);}
+// FONCTION CORRIGEE - CONFIANCE QUI NE RESTE PLUS BLOQUEE A 60%
+function calcConfiance(prix, zoneBas, zoneHaut, diff, dansZone){
+  if(dansZone){
+    let milieu = (zoneBas+zoneHaut)/2;
+    let distCentre = Math.abs(prix - milieu) / ((zoneHaut-zoneBas)/2);
+    return Math.round(95 - (distCentre * 10));
+  } else {
+    let distZone = prix < zoneBas ? (zoneBas - prix) / diff : (prix - zoneHaut) / diff;
+    let c = Math.round(82 - (distZone * 60));
+    if(c < 62) c = 62;
+    if(c > 82) c = 82;
+    return c;
+  }
+}
 function faireBAM2(paire,prix){
 let haut=fiboAuto.haut, bas=fiboAuto.bas; let fix = (paire.includes("USD") && prix<10) ? 5 : 2; let diff = haut - bas;
 let signal, confiance, entree, sl, tp1, tp2, zoneBas, zoneHaut, dansZone, texteZone;
 if(fiboAuto.q1==='VENTE'){
-  signal="VENTE"; zoneBas = bas + diff*0.618; zoneHaut = bas + diff*0.786; dansZone = (prix>=zoneBas && prix<=zoneHaut); entree = dansZone ? prix : (zoneBas+zoneHaut)/2; sl = haut + diff*0.15; tp1 = bas - diff*0.272; tp2 = bas - diff*0.414; texteZone = dansZone ? "✅ TU ES DANS LA ZONE DORÉE ! Entre en VENTE maintenant, comme dans la vidéo." : "⏳ ATTENDS que le prix remonte dans la zone "+zoneBas.toFixed(fix)+" - "+zoneHaut.toFixed(fix)+" pour vendre.";
-  // SEUL CHANGEMENT CALCUL CONFIANCE - Avant c'était juste 90 ou 75, maintenant ça bouge selon ta position dans la zone
-  if(dansZone){
-    let milieu = (zoneBas+zoneHaut)/2;
-    let distCentre = Math.abs(prix - milieu) / ((zoneHaut-zoneBas)/2); // 0 = au centre parfait, 1 = au bord
-    confiance = Math.round(95 - (distCentre * 10)); // 85% au bord, 95% au centre parfait
-  } else {
-    let distZone = prix < zoneBas ? (zoneBas - prix) / diff : (prix - zoneHaut) / diff;
-    confiance = Math.round(75 - Math.min(15, distZone * 100)); // 60% si très loin, 75% si proche
-    if(confiance < 60) confiance = 60;
-  }
+  signal="VENTE"; zoneBas = bas + diff*0.618; zoneHaut = bas + diff*0.786; dansZone = (prix>=zoneBas && prix<=zoneHaut); entree = dansZone ? prix : (zoneBas+zoneHaut)/2; sl = haut + diff*0.15; tp1 = bas - diff*0.272; tp2 = bas - diff*0.414; confiance = calcConfiance(prix, zoneBas, zoneHaut, diff, dansZone); texteZone = dansZone ? "✅ TU ES DANS LA ZONE DORÉE ! Entre en VENTE maintenant, comme dans la vidéo." : "⏳ ATTENDS que le prix remonte dans la zone "+zoneBas.toFixed(fix)+" - "+zoneHaut.toFixed(fix)+" pour vendre.";
 } else {
-  signal="ACHAT"; zoneBas = haut - diff*0.786; zoneHaut = haut - diff*0.618; dansZone = (prix>=zoneBas && prix<=zoneHaut); entree = dansZone ? prix : (zoneBas+zoneHaut)/2; sl = bas - diff*0.15; tp1 = haut + diff*0.272; tp2 = haut + diff*0.414; texteZone = dansZone ? "✅ TU ES DANS LA ZONE DORÉE ! Entre en ACHAT maintenant." : "⏳ ATTENDS que le prix redescende dans la zone "+zoneBas.toFixed(fix)+" - "+zoneHaut.toFixed(fix)+" pour acheter.";
-  if(dansZone){
-    let milieu = (zoneBas+zoneHaut)/2;
-    let distCentre = Math.abs(prix - milieu) / ((zoneHaut-zoneBas)/2);
-    confiance = Math.round(95 - (distCentre * 10));
-  } else {
-    let distZone = prix < zoneBas ? (zoneBas - prix) / diff : (prix - zoneHaut) / diff;
-    confiance = Math.round(75 - Math.min(15, distZone * 100));
-    if(confiance < 60) confiance = 60;
-  }
+  signal="ACHAT"; zoneBas = haut - diff*0.786; zoneHaut = haut - diff*0.618; dansZone = (prix>=zoneBas && prix<=zoneHaut); entree = dansZone ? prix : (zoneBas+zoneHaut)/2; sl = bas - diff*0.15; tp1 = haut + diff*0.272; tp2 = haut + diff*0.414; confiance = calcConfiance(prix, zoneBas, zoneHaut, diff, dansZone); texteZone = dansZone ? "✅ TU ES DANS LA ZONE DORÉE ! Entre en ACHAT maintenant." : "⏳ ATTENDS que le prix redescende dans la zone "+zoneBas.toFixed(fix)+" - "+zoneHaut.toFixed(fix)+" pour acheter.";
 }
 entree=Number(entree.toFixed(fix)); sl=Number(sl.toFixed(fix)); tp1=Number(tp1.toFixed(fix)); tp2=Number(tp2.toFixed(fix));
 dernierSignal=signal;dernierSL=sl;dernierTP1=tp1;dernierTP2=tp2;dernierePaire=paire;dernierPrix=prix;derniereConfiance=confiance;derniereEntree=entree;
 let box=document.getElementById('dirBox');
 if(signal==="VENTE"){box.className='dir-box dir-down';box.innerHTML='🔴 FIBO AUTO - VENTE / ENTRY SHORT<div class="dir-small">Stratégie Vidéo - Confiance '+confiance+'% - '+(dansZone?'DANS LA ZONE ✅':'HORS ZONE ⏳')+'</div>';} else{box.className='dir-box dir-up';box.innerHTML='🟢 FIBO AUTO - ACHAT / ENTRY LONG<div class="dir-small">Stratégie Vidéo - Confiance '+confiance+'% - '+(dansZone?'DANS LA ZONE ✅':'HORS ZONE ⏳')+'</div>';}
-// SEUL AJOUT AFFICHAGE CONFIANCE
 let confColor = confiance >= 85 ? '#00ff88' : (confiance >= 70 ? '#ffcc00' : '#ff1744');
 let confText = confiance >= 85 ? '🟢 TRÈS FORT - TU PEUX PRENDRE' : (confiance >= 70 ? '🟡 FORT - TU PEUX PRENDRE' : '🔴 MOYEN - ATTENDS LA ZONE');
 document.getElementById('confBig').innerText = confiance + ' %';
